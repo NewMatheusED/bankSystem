@@ -1,12 +1,3 @@
-// create a class named Conta for a bank system 
-// that has the following attributes: name, accountNumber, balance, deposit, withdraw, transfer
-// the class should have a constructor that receives the name and accountNumber as parameters
-// the class should have a method named deposit that receives an amount as parameter
-// the class should have a method named withdraw that receives an amount as parameter
-// the class should have a method named transfer that receives an amount and an account as parameters
-// the class should have a method named getBalance that returns the balance
-// the class should have a method named getAccount that returns the account number
-// the class should have a method named getName that returns the name
 class systemAccount {
     constructor() {
         this.accounts = [];
