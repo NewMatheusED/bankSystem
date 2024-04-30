@@ -25,6 +25,10 @@ class systemAccount {
         console.log('Account doesnt exist');
         return false;
     }
+
+    _getAllAccounts() {
+        console.log(this.accounts);
+    }
     
     
 }
