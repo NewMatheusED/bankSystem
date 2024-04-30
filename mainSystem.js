@@ -4,8 +4,20 @@ class systemAccount {
     }
 
     _addAccount(account) {
-        this.accounts.push(account);
-        console.log(`Account of ${account.name} added in the system`)
+        if(this.accounts.length > 0) {
+            for (let acc of this.accounts) {
+                if(acc.account_num == account.account_num) {
+                    console.log("Account already exists");
+                    return false;
+                }else{
+                    this.accounts.push(account);
+                    console.log(`Account of ${account.name} added in the system`)
+                }
+            }
+        } else {
+            this.accounts.push(account);
+            console.log(`Account of ${account.name} added in the system`)
+        }
     }
 
     _verifyAccount(account) { //input valid only with string values
