@@ -12,11 +12,13 @@ class systemAccount {
                 }else{
                     this.accounts.push(account);
                     console.log(`Account of ${account.name} added in the system`)
+                    return true;
                 }
             }
         } else {
             this.accounts.push(account);
             console.log(`Account of ${account.name} added in the system`)
+            return true;
         }
     }
 
@@ -38,26 +40,27 @@ class systemAccount {
         return false;
     }
 
+    _getAccount(numAccount) {
+        return this.accounts.find(acc => acc.account_num === numAccount);
+    }
+
     _getAllAccounts() {
         console.log(this.accounts);
     }
     
-    _login(account_num, login) {
+    _login(user, pass) {
         for (let acc of this.accounts) {
-            if(acc.account_num === account_num) {
-                if(acc.password === login) {
-                    console.log(`Welcome ${acc.name}`);
+            if(acc.account_num === user) {
+                if(acc.password === pass) {
+                    console.log(`Bem-vindo ${acc.name}`);
                     return true;
-                } else {
-                    console.log('Try again');
-                    return false;
                 }
-            } else {
-                console.log('Try again');
-                return false;
             }
         }
+        console.log('Tente novamente');
+        return false;
     }
+    
 }
 class Conta {
     constructor(name, account_num, balance, password) {

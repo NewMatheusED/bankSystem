@@ -11,8 +11,8 @@
         <div class="container">
             <h1>Welcome to the bank!👋</h1>
             <h2>Please, login in your account</h2>
-            <form>
-                <input type="text" name="user" id="user" placeholder="User">
+            <form id="form">
+                <input type="text" name="user" id="user" placeholder="Account Number">
                 <input type="password" name="password" id="password" placeholder="Password">
                 <button type="submit">Login</button>
             </form>
@@ -24,7 +24,23 @@
 <script src="mainSystem.js"></script>
 <script>
     let sistema = new systemAccount();
-    let conta1 = new Conta('Matheus', '123456', 1000, 'Master')
+    let conta1 = new Conta('Matheus', '123456', 1000, 'Master');
+    let conta2 = new Conta('Joao', '777', 1000, 'Agora');
     sistema._addAccount(conta1);
+    sistema._addAccount(conta2);
+    const form = document.getElementById("form");
+    form.addEventListener("submit", function(e) {
+        let user = form.user.value;
+        let pass = form.password.value;
+        if(sistema._login(user, pass)) {
+            console.log('Logado com sucesso');
+            let mainUser = sistema._getAccount(user)
+            localStorage.setItem('loggedUser', JSON.stringify(mainUser));
+            window.location.href = 'dashboard.html';
+        } else {
+            alert('Erro ao logar');
+        };
+        e.preventDefault();
+    });
 </script>
 </html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <section>
+        <div class="container">
+            <h1 id="name"></h1>
+        </div>
+    </section>
+
+</body>
+<script src="mainSystem.js"></script>
+<script>
+    let sistema = new systemAccount();
+    let logUser = JSON.parse(localStorage.getItem('loggedUser'));
+    const name_user = logUser.name;
+    document.getElementById('name').innerText = 'Olá ' + name_user + '!';
+</script>
+</html>
