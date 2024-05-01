@@ -15,6 +15,7 @@
                 <input type="text" name="user" id="user" placeholder="User">
                 <input type="password" name="password" id="password" placeholder="Password">
                 <button type="submit">Login</button>
+            </form>
             <p>Doesn't have an account? Create a new one <a href="">here</a></p>
         </div>
     </section>
@@ -23,7 +24,7 @@
 <script src="mainSystem.js"></script>
 <script>
     let sistema = new systemAccount();
-    let conta1 = new Conta('Matheus', '123456', 1000)
+    let conta1 = new Conta('Matheus', '123456', 1000, 'Master')
     sistema._addAccount(conta1);
 </script>
 </html>

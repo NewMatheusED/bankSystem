@@ -42,11 +42,25 @@ class systemAccount {
         console.log(this.accounts);
     }
     
-    
+    _login(account_num, login) {
+        for (let acc of this.accounts) {
+            if(acc.account_num === account_num) {
+                if(acc.password === login) {
+                    console.log(`Welcome ${acc.name}`);
+                    return true;
+                } else {
+                    console.log('Try again');
+                    return false;
+                }
+            } else {
+                console.log('Try again');
+                return false;
+            }
+        }
+    }
 }
-
 class Conta {
-    constructor(name, account_num, balance) {
+    constructor(name, account_num, balance, password) {
         if (typeof name !== 'string') {
             throw new Error('Name must be a string');
         }
@@ -59,9 +73,14 @@ class Conta {
             throw new Error('Balance must be a number');
         }
 
+        if (typeof password !== 'string') {
+            throw new Error('Password must be a string');
+        }
+
         this.name = name;
         this.account_num = account_num;
         this.balance = balance;
+        this.password = password;
         this.extract = [];
     }
 
