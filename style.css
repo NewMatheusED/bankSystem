@@ -7,13 +7,34 @@
     font-family: "Roboto", sans-serif;
 }
 
+.w100 {
+    width: 100%;
+}
+
+.w50 {
+    width: 50%;
+}
+
 html, body {
     height: 100%;
 }
 
 .container {
     margin: 0 auto;
-    max-width: 1200px;
+    max-width: 1000px;
     padding: 2%;
     text-align: center;
+}
+
+form {
+    display: flex;
+    flex-wrap: wrap;
+    span {
+        background-color: bisque;
+        font-size: 12px;
+        padding: 5px;
+        margin: 2px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
 }

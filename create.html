@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bank System - Login</title>
+    <title>Bank System - Create Account</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <section>
         <div class="container">
             <h1>Welcome to the bank!👋</h1>
-            <h2>Please, login in your account</h2>
+            <h2>Let's create your account!</h2>
             <form id="form">
-                <input class="w50" type="text" name="user" id="user" placeholder="Account Number">
+                <input class="w50" type="text" name="name" id="user" placeholder="Your name">
                 <input class="w50" type="password" name="password" id="password" placeholder="Password">
-                <button class="w100" type="submit">Login</button>
+                <input class="w50" type="number" id="balance" name="balance" placeholder="Currency balance">
+                <input style="width: 30%;" type="text" name="accountNum" id="accountNum" placeholder="Personalized accout number?"> <span>Random number</span>
+                <button class="w100"type="submit">Create account</button>
             </form>
-            <p>Doesn't have an account? Create a new one <a href="create.html">here</a></p>
         </div>
     </section>
 
