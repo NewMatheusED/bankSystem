@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank System - Create Account</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <section>
+        <div class="container">
+            <h1>Welcome to the bank!👋</h1>
+            <h2>Let's create your account!</h2>
+            <form method="post" id="form">
+                <input required class="w50" type="text" name="name" id="user" placeholder="Your name">
+                <input required class="w50" type="password" name="password" id="password" placeholder="Password">
+                <input required class="w50" type="number" id="balance" name="balance" placeholder="Currency balance">
+                <input required style="width: 30%;" type="text" pattern="\d{6}" maxlength="6" minlength="6" name="accountNum" id="accountNum" placeholder="Personalized accout number? (xxxxxx)"> <span id="random">Random number</span>
+                <button class="w100" type="submit">Create account</button>
+            </form>
+        </div>
+    </section>
+
+</body>
+<script>
+    const randomBtn = document.getElementById('random');
+
+    randomBtn.addEventListener('click', function() {
+        let randomNum = Math.floor(Math.random() * 900000) + 100000;
+        document.getElementById('accountNum').value = randomNum;
+    });
+    // const form = document.getElementById("form");
+    // form.addEventListener("submit", function(e) {
+    //     let user = form.user.value;
+    //     let pass = form.password.value;
+    //     let balance = form.balance.value;
+    //     let accountNum = form.accountNum.value;
+    //     sistema._createAccount(user, accoutNum, balance, pass);
+    //     //window.location.href = 'index.html';
+    //     e.preventDefault();
+    //     sistema._getAllAccounts();
+    // });
+</script>
+</html>

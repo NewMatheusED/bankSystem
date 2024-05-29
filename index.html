@@ -21,9 +21,11 @@
     </section>
 
 </body>
-<script src="mainSystem.js"></script>
 <script>
+    var systemAccount = require('./systemAccount');
+    var Conta = require('./Conta');
     let sistema = new systemAccount();
+    console.log(sistema._getAllAccounts());
     const form = document.getElementById("form");
     form.addEventListener("submit", function(e) {
         let user = form.user.value;

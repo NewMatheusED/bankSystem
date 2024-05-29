@@ -1,0 +1,18 @@
+{
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "mysql": "^2.18.1",
+    "nodemon": "^3.1.2"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "name": "banksystem",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

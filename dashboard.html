@@ -14,8 +14,9 @@
     </section>
 
 </body>
-<script src="mainSystem.js"></script>
 <script>
+    var systemAccount = require('./systemAccount');
+    var Conta = require('./Conta');
     let sistema = new systemAccount();
     let logUser = JSON.parse(localStorage.getItem('loggedUser'));
     const name_user = logUser.name;

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bank System - Create Account</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
     <section>
@@ -12,31 +12,41 @@
             <h1>Welcome to the bank!👋</h1>
             <h2>Let's create your account!</h2>
             <form id="form">
-                <input class="w50" type="text" name="name" id="user" placeholder="Your name">
-                <input class="w50" type="password" name="password" id="password" placeholder="Password">
-                <input class="w50" type="number" id="balance" name="balance" placeholder="Currency balance">
-                <input style="width: 30%;" type="text" name="accountNum" id="accountNum" placeholder="Personalized accout number?"> <span>Random number</span>
+                <input required class="w50" type="text" name="name" id="user" placeholder="Your name">
+                <input required class="w50" type="password" name="password" id="password" placeholder="Password">
+                <input required class="w50" type="number" id="balance" name="balance" placeholder="Currency balance">
+                <input required style="width: 30%;" type="text" pattern="\d{6}" maxlength="6" minlength="6" name="accountNum" id="accountNum" placeholder="Personalized accout number? (xxxxxx)"> <span id="random">Random number</span>
                 <button class="w100"type="submit">Create account</button>
             </form>
         </div>
     </section>
 
 </body>
-<script src="mainSystem.js"></script>
 <script>
+    var systemAccount = require('./systemAccount');
+    var Conta = require('./Conta');
     let sistema = new systemAccount();
+
+    const randomBtn = document.getElementById('random');
+
+    randomBtn.addEventListener('click', function() {
+    let randomNum = Math.floor(Math.random() * 900000) + 100000;
+    if(sistema._verifyAccount(randomNum)) {
+        randomNum = Math.floor(Math.random() * 900000) + 100000;
+    } else {
+        document.getElementById('accountNum').value = randomNum;
+    }
+});
     const form = document.getElementById("form");
     form.addEventListener("submit", function(e) {
         let user = form.user.value;
         let pass = form.password.value;
-        if(sistema._login(user, pass)) {
-            let mainUser = sistema._getAccount(user)
-            localStorage.setItem('loggedUser', JSON.stringify(mainUser));
-            window.location.href = 'dashboard.html';
-        } else {
-            alert('Erro ao logar');
-        };
+        let balance = form.balance.value;
+        let accountNum = form.accountNum.value;
+        sistema._createAccount(user, accoutNum, balance, pass);
+        //window.location.href = 'index.html';
         e.preventDefault();
+        sistema._getAllAccounts();
     });
 </script>
 </html>
