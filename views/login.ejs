@@ -9,7 +9,40 @@
 <body>
     <section>
         <div class="container">
-            <h1 id="name"></h1>
+            <h1 id="name">Olá <%= nome %></h1>
+            <!-- formatar saldo para moeda -->
+
+            <p>Seu saldo é de <%= new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(saldo) %></p>
+            <p>Seu número de conta é: <%= accountNum %></p>
+
+            <h2>Operações disponíveis:</h2>
+            <div class="operation">
+                <h3>Depositar</h3>
+            </div><!--operation-->
+            <div class="operation">
+                <h3>Sacar</h3>
+            </div><!--operation-->
+            <div class="operation">
+                <h3>Transferir</h3>
+                <h4>Contatos disponíveis:</h4>
+                <% for (var i = 0; i < contas.length; i++) { %>
+                    <p><%= contas[i].nome %> - <%= contas[i].accountNum %></p>
+                <% } %>
+                <form action="/transfer" method="post">
+                    <input type="text" name="accountNum" id="accountNum" placeholder="Usuário para transferir">
+                    <input type="number" name="val" id="valorTransferido" placeholder="Valor">
+                    <button type="submit">Transferir</button>
+                </form>
+            </div><!--operation-->
+            <div class="operation">
+                <% if(extrato.length > 0) { %>
+                    <h3>Extrato</h3>
+                    <% for (var i = 0; i < extrato.length; i++) { %>
+                        <p><%= extrato[i].tipo %> | <%= new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(extrato[i].valor) %></p>
+                    <% } %>
+                <% } %>
+            </div><!--operation-->
+            <a href="/">Sair</a>
         </div>
     </section>
 </body>

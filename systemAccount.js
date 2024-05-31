@@ -1,22 +1,22 @@
-var mysql = require('mysql');
-
-var con = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: "usuarios"
-});
-
+const Conta = require('./Conta');
+const con = require('./db');
 class systemAccount {
+
     constructor() {
         this.accounts = [];
     }
 
     _addAccount(account) {
-        var sql = "INSERT INTO accounts (name, account_num, balance, password) VALUES (?, ?, ?, ?)";
-        con.query(sql, [account.name, account.account_num, account.balance, account.password], function (err, result) {
-            if (err) throw err;
-            console.log(`Account of ${account.name} added in the system`);
+        var sql = "INSERT INTO usuarios (nome, accountNum, balance, password) VALUES (?, ?, ?, ?)";
+        return new Promise((resolve, reject) => {
+            con.query(sql, [account.name, account.account_num, account.balance, account.password], function (err, result) {
+                if (err) {
+                    reject(err);
+                } else {
+                    console.log(`Account of ${account.name} added in the system`);
+                    resolve(result);
+                }
+            });
         });
     }
 
@@ -26,26 +26,32 @@ class systemAccount {
     }
 
     _verifyAccount(account_num) {
-        var sql = "SELECT * FROM accounts WHERE account_num = ?";
-        con.query(sql, [account_num], function (err, results) {
-            if (err) throw err;
-            return results.length > 0;
+        var sql = "SELECT * FROM usuarios WHERE accountNum = ?";
+        return new Promise((resolve, reject) => {
+            con.query(sql, [account_num], function (err, results) {
+                if (err) reject(err);
+                resolve(results.length > 0);
+            });
         });
     }
-
+    
     _getAccount(numAccount) {
-        var sql = "SELECT * FROM accounts WHERE account_num = ?";
-        con.query(sql, [numAccount], function (err, results) {
-            if (err) throw err;
-            return results[0];
+        var sql = "SELECT * FROM usuarios WHERE accountNum = ?";
+        return new Promise((resolve, reject) => {
+            con.query(sql, [numAccount], function (err, results) {
+                if (err) reject(err);
+                resolve(results[0]);
+            });
         });
     }
 
     _login(user, pass) {
-        var sql = "SELECT * FROM accounts WHERE account_num = ? AND password = ?";
-        con.query(sql, [user, pass], function (err, results) {
-            if (err) throw err;
-            return results.length > 0;
+        var sql = "SELECT * FROM usuarios WHERE accountNum = ? AND password = ?";
+        return new Promise((resolve, reject) => {
+            con.query(sql, [user, pass], function (err, results) {
+                if (err) reject(err);
+                resolve(results[0])
+            })
         });
     }
 }

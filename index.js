@@ -1,9 +1,10 @@
 const express = require('express');
 const app = express();
-const mysql = require('mysql');
+const db = require('./db');
 
 const bodyParser = require('body-parser');
 const path = require('path');
+const session = require('express-session');
 
 app.listen('3000', () => {
     console.log('Server is running on port 3000');
@@ -18,19 +19,12 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-
-//init mysql
-const db = mysql.createConnection({
-    host: 'localhost',  //localhost
-    user: 'root',     //root
-    password: '',   //senha
-    database: 'banksystem'  //nome do banco
-});
-
-db.connect((err) => {
-    if(err) console.log('Error connecting to database');
-    else console.log('Database connected');
-})
+app.use(session({
+    secret: 'your secret key',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false } // set this to true if you're using https
+  }));
 
 app.get('/', (req, res) => {
         res.render('index', {})
@@ -40,9 +34,69 @@ app.get('/createAccount', (req, res) => {
     res.render('createAccount', {})
 })
 
-app.get('/login', (req, res) => {
-    res.render('login', {})
-})
+app.get('/login', function(req, res) {
+    const sql = 'SELECT * FROM usuarios WHERE accountNum = ?';
+    db.query(sql, [req.session.accountNum], function(err, results) {
+        if (err) {
+            console.log(err);
+        } else if (results.length === 0) {
+            console.log('Nenhum usuário encontrado com esse número de conta');
+        } else {
+            const user = results[0];
+            if (!user.balance) {
+                console.log('Usuário encontrado, mas sem saldo');
+            }
+            const sqlAllAccounts = 'SELECT * FROM usuarios WHERE nome != ?';
+            db.query(sqlAllAccounts, [user.nome] , (err, accounts) => {
+                if (err) {
+                    console.log(err);
+                } else {
+                    const sqlExtract = 'SELECT * FROM transacoes WHERE accountNum = ?';
+                    db.query(sqlExtract, [req.session.accountNum], (err, extract) => {
+                        if (err) {
+                            console.log(err);
+                        } else {
+                            res.render('login', {nome: user.nome, saldo: user.balance, accountNum: user.accountNum, contas: accounts, extrato: extract});
+                        }
+                    });
+                }
+            })
+        }
+    });
+});
+
+app.post('/', (req, res) => {
+    const { name, password } = req.body;
+    const sql = "SELECT * FROM usuarios WHERE nome = ? AND password = ?";
+    db.query(sql, [name, password], (err, result) => {
+        if(err) {
+            console.log(err);
+            res.status(500).send('Erro ao fazer login');
+        } else if(result.length > 0) {
+            const user = result[0];
+            req.session.accountNum = user.accountNum;
+            const sqlAllAccounts = "SELECT * FROM usuarios WHERE nome != ?"; // obter todas as contas
+            db.query(sqlAllAccounts, [name], (err, accounts) => {
+                if(err) {
+                    console.log(err);
+                    res.status(500).send('Erro ao buscar contas');
+                } else {
+                    const sqlExtract = 'SELECT * FROM transacoes WHERE accountNum = ?';
+                    db.query(sqlExtract, [req.session.accountNum], (err, extract) => {
+                        if (err) {
+                            console.log(err);
+                            res.status(500).send('Erro ao buscar extrato');
+                        } else {
+                            res.render('login', {nome: user.nome, saldo: user.balance, accountNum: user.accountNum, contas: accounts, extrato: extract});
+                        }
+                    });
+                }
+            });
+        } else {
+            res.status(401).send('Nome de usuário ou senha incorretos');
+        }
+    });
+});
 
 // Rota para criar uma conta
 app.post('/createAccount', (req, res) => {
@@ -53,8 +107,16 @@ app.post('/createAccount', (req, res) => {
             console.log(err);
             res.status(500).send('Erro ao criar a conta');
         } else { 
-            console.log(`Conta criada: ${name}`);
-            res.status(200).send('Conta criada com sucesso');
+            req.session.accountNum = accountNum;
+            const sqlAllAccounts = "SELECT * FROM usuarios WHERE nome != ?"; // obter todas as contas
+            db.query(sqlAllAccounts, [name], (err, accounts) => {
+                if(err) {
+                    console.log(err);
+                    res.status(500).send('Erro ao buscar contas');
+                } else {
+                    res.render('login', {nome: name, saldo: balance, accountNum: accountNum, contas: accounts});
+                }
+            });
         }
     });
 });
@@ -68,10 +130,65 @@ app.post('/login', (req, res) => {
             console.log(err);
             res.status(500).send('Erro ao fazer login');
         } else if (results.length > 0) {
+            req.session.accountNum = accountNum;
             console.log(`Login bem-sucedido: ${accountNum}`);
             res.status(200).send('Login bem-sucedido');
         } else {
             res.status(401).send('Nome de usuário ou senha incorretos');
+        }
+    });
+});
+
+app.post('/transfer', (req, res) => {
+    const val = parseFloat(req.body.val); // Convert the transfer value to a number
+    const accountNum = req.body.accountNum;
+    const source = req.session.accountNum
+ 
+
+    const sqlTarget = 'SELECT * FROM usuarios WHERE accountNum = ?';
+    db.query(sqlTarget, [accountNum], function (err, results) {
+        if (err) {
+            console.log(err);
+        } else {
+            const target = results[0].balance
+            const sqlSource = 'SELECT * FROM usuarios WHERE accountNum = ?';
+            db.query(sqlSource, [source], function (err, results) {
+                if (err) {
+                    console.log(err)
+                } else {
+                    const sourceBalance = results[0].balance
+                    const newSource = sourceBalance - val
+                    const newTarget = target + val
+                    const sqlUpdateSource = 'UPDATE usuarios SET balance = ? WHERE accountNum = ?';
+                    db.query(sqlUpdateSource, [newSource, source], function (err, results) {
+                        if (err) {
+                            console.log(err)
+                        } else {
+                            const sqlUpdateTarget = 'UPDATE usuarios SET balance = ? WHERE accountNum = ?';
+                            db.query(sqlUpdateTarget, [newTarget, accountNum], function (err, results) {
+                                if (err) {
+                                    console.log(err)
+                                } else {
+                                    const sqlInsertTransaction = 'INSERT INTO transacoes (valor, accountNum, tipo) VALUES (?,?,?)';
+                                    db.query(sqlInsertTransaction, [val, accountNum, 'Recebimento (+)'], function (err, results) {
+                                        if(err) {
+                                            console.log(err)
+                                        } else {
+                                            db.query(sqlInsertTransaction, [val, source, 'Transferência (-)'], function (err, results) {
+                                                if(err) {
+                                                    console.log(err)
+                                                } else {
+                                                    res.redirect('/login')
+                                                } 
+                                            })
+                                        }
+                                    })
+                                }           
+                            });
+                        }
+                    });
+                }
+            });
         }
     });
 });
