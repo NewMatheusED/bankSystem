@@ -83,8 +83,7 @@ app.post('/', (req, res) => {
     const sql = "SELECT * FROM usuarios WHERE accountNum = ?";
     db.query(sql, [name], (err, result) => {
         if(err) {
-            console.log(err);
-            res.status(500).send('Erro ao fazer login');
+            renderIndex(req, res, 'Senha ou usuário incorretos')
         } else {
             const user = result[0];
             if(user <= 0) {
@@ -93,32 +92,34 @@ app.post('/', (req, res) => {
                 bcrypt.compare(password, user.password, (err, result) => {
                     if (err) {
                         renderIndex(req, res, 'Senha ou usuário incorretos')
-                    }
-                })
-                req.session.accountNum = user.accountNum;
-                const sqlAllAccounts = "SELECT * FROM usuarios WHERE accountNum != ?"; // obter todas as contas menos a sua própria
-                db.query(sqlAllAccounts, [name], (err, accounts) => {
-                    if(err) {
-                        console.log(err);
-                        res.status(500).send('Erro ao buscar contas');
-                    } else {
-                        const sqlExtract = 'SELECT * FROM transacoes WHERE accountNum = ?';
-                        db.query(sqlExtract, [req.session.accountNum], (err, extract) => {
-                            if (err) {
+                    } else if (result) {
+                        req.session.accountNum = user.accountNum;
+                        const sqlAllAccounts = "SELECT * FROM usuarios WHERE accountNum != ?"; // obter todas as contas menos a sua própria
+                        db.query(sqlAllAccounts, [name], (err, accounts) => {
+                            if(err) {
                                 console.log(err);
-                                res.status(500).send('Erro ao buscar extrato');
+                                res.status(500).send('Erro ao buscar contas');
                             } else {
-                                res.render('login', {nome: user.nome, saldo: user.balance, accountNum: user.accountNum, contas: accounts, extrato: extract, error: ''});
+                                const sqlExtract = 'SELECT * FROM transacoes WHERE accountNum = ?';
+                                db.query(sqlExtract, [req.session.accountNum], (err, extract) => {
+                                    if (err) {
+                                        console.log(err);
+                                        res.status(500).send('Erro ao buscar extrato');
+                                    } else {
+                                        res.render('login', {nome: user.nome, saldo: user.balance, accountNum: user.accountNum, contas: accounts, extrato: extract, error: ''});
+                                    }
+                                });
                             }
                         });
+                    } else {
+                        renderIndex(req, res, 'Usuário ou senha incorreto')
                     }
-                });
+                })
             }
         }
     });
 });
 
-// Rota para criar uma conta
 // Rota para criar uma conta
 app.post('/createAccount', (req, res) => {
     const { name, accountNum, balance, password } = req.body;
