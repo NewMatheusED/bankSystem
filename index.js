@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const db = require('./db');
+const bcrypt = require('bcrypt');
 
 const bodyParser = require('body-parser');
 const path = require('path');
@@ -54,15 +55,19 @@ function renderLogin(req, res, error = '') {
     });
 }
 
-app.get('/', (req, res) => {
+function renderIndex(req, res, error = '') {
     const sql = 'SELECT * FROM usuarios'
     db.query(sql, (err, rows) => {
         if (err) {
             console.log(err)
         } else {
-            res.render('index', {accounts: rows, error: ''})
+            res.render('index', {accounts: rows, error: error})
         }
     })
+}
+
+app.get('/', (req, res) => {
+    renderIndex(req, res)
 })
 
 app.get('/createAccount', (req, res) => {
@@ -75,61 +80,69 @@ app.get('/login', function(req, res) {
 
 app.post('/', (req, res) => {
     const { name, password } = req.body;
-    const sql = "SELECT * FROM usuarios WHERE accountNum = ? AND password = ?";
-    db.query(sql, [name, password], (err, result) => {
+    const sql = "SELECT * FROM usuarios WHERE accountNum = ?";
+    db.query(sql, [name], (err, result) => {
         if(err) {
             console.log(err);
             res.status(500).send('Erro ao fazer login');
-        } else if(result.length > 0) {
-            const user = result[0];
-            req.session.accountNum = user.accountNum;
-            const sqlAllAccounts = "SELECT * FROM usuarios WHERE nome != ?"; // obter todas as contas
-            db.query(sqlAllAccounts, [name], (err, accounts) => {
-                if(err) {
-                    console.log(err);
-                    res.status(500).send('Erro ao buscar contas');
-                } else {
-                    const sqlExtract = 'SELECT * FROM transacoes WHERE accountNum = ?';
-                    db.query(sqlExtract, [req.session.accountNum], (err, extract) => {
-                        if (err) {
-                            console.log(err);
-                            res.status(500).send('Erro ao buscar extrato');
-                        } else {
-                            res.render('login', {nome: user.nome, saldo: user.balance, accountNum: user.accountNum, contas: accounts, extrato: extract, error: ''});
-                        }
-                    });
-                }
-            });
         } else {
-            const sql = 'SELECT * FROM usuarios'
-            db.query(sql, (err, rows) => {
-                if (err) {
-                    console.log(err)
-                } else {
-                    res.render('index', {accounts: rows, error: 'Número da conta ou senha incorreto'})
-                }
-            })
+            const user = result[0];
+            if(user <= 0) {
+                renderIndex(req, res, 'Senha ou usuário incorretos')
+            } else {
+                bcrypt.compare(password, user.password, (err, result) => {
+                    if (err) {
+                        renderIndex(req, res, 'Senha ou usuário incorretos')
+                    }
+                })
+                req.session.accountNum = user.accountNum;
+                const sqlAllAccounts = "SELECT * FROM usuarios WHERE accountNum != ?"; // obter todas as contas menos a sua própria
+                db.query(sqlAllAccounts, [name], (err, accounts) => {
+                    if(err) {
+                        console.log(err);
+                        res.status(500).send('Erro ao buscar contas');
+                    } else {
+                        const sqlExtract = 'SELECT * FROM transacoes WHERE accountNum = ?';
+                        db.query(sqlExtract, [req.session.accountNum], (err, extract) => {
+                            if (err) {
+                                console.log(err);
+                                res.status(500).send('Erro ao buscar extrato');
+                            } else {
+                                res.render('login', {nome: user.nome, saldo: user.balance, accountNum: user.accountNum, contas: accounts, extrato: extract, error: ''});
+                            }
+                        });
+                    }
+                });
+            }
         }
     });
 });
 
 // Rota para criar uma conta
+// Rota para criar uma conta
 app.post('/createAccount', (req, res) => {
     const { name, accountNum, balance, password } = req.body;
-    const sql = "INSERT INTO usuarios (nome, accountNum, balance, password) VALUES (?, ?, ?, ?)";
-    db.query(sql, [name, accountNum, balance, password], function (err, result) {
+    bcrypt.hash(password, 10, (err, hash) => {
         if (err) {
             console.log(err);
             res.status(500).send('Erro ao criar a conta');
-        } else { 
-            req.session.accountNum = accountNum;
-            const sqlAllAccounts = "SELECT * FROM usuarios WHERE nome != ?"; // obter todas as contas
-            db.query(sqlAllAccounts, [name], (err, accounts) => {
-                if(err) {
+        } else {
+            const sql = "INSERT INTO usuarios (nome, accountNum, balance, password) VALUES (?, ?, ?, ?)";
+            db.query(sql, [name, accountNum, balance, hash], function (err, result) {
+                if (err) {
                     console.log(err);
-                    res.status(500).send('Erro ao buscar contas');
+                    res.status(500).send('Erro ao criar a conta');
                 } else {
-                    res.render('login', {nome: name, saldo: balance, accountNum: accountNum, contas: accounts, extrato: []});
+                    req.session.accountNum = accountNum;
+                    const sqlAllAccounts = "SELECT * FROM usuarios WHERE accountNum != ?"; // obter todas as contas
+                    db.query(sqlAllAccounts, [name], (err, accounts) => {
+                        if(err) {
+                            console.log(err);
+                            res.status(500).send('Erro ao buscar contas');
+                        } else {
+                            res.render('login', {nome: name, saldo: balance, accountNum: accountNum, contas: accounts, extrato: [], error: ''});
+                        }
+                    });
                 }
             });
         }
