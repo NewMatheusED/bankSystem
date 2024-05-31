@@ -26,22 +26,7 @@ app.use(session({
     cookie: { secure: false } // set this to true if you're using https
   }));
 
-app.get('/', (req, res) => {
-    const sql = 'SELECT * FROM usuarios'
-    db.query(sql, (err, rows) => {
-        if (err) {
-            console.log(err)
-        } else {
-            res.render('index', {accounts: rows, error: ''})
-        }
-    })
-})
-
-app.get('/createAccount', (req, res) => {
-    res.render('createAccount', {})
-})
-
-app.get('/login', function(req, res) {
+function renderLogin(req, res, error = '') {
     const sql = 'SELECT * FROM usuarios WHERE accountNum = ?';
     db.query(sql, [req.session.accountNum], function(err, results) {
         if (err) {
@@ -60,13 +45,32 @@ app.get('/login', function(req, res) {
                         if (err) {
                             console.log(err);
                         } else {
-                            res.render('login', {nome: user.nome, saldo: user.balance, accountNum: user.accountNum, contas: accounts, extrato: extract});
+                            res.render('login', {nome: user.nome, saldo: user.balance, accountNum: user.accountNum, contas: accounts, extrato: extract, error: error});
                         }
                     });
                 }
             })
         }
     });
+}
+
+app.get('/', (req, res) => {
+    const sql = 'SELECT * FROM usuarios'
+    db.query(sql, (err, rows) => {
+        if (err) {
+            console.log(err)
+        } else {
+            res.render('index', {accounts: rows, error: ''})
+        }
+    })
+})
+
+app.get('/createAccount', (req, res) => {
+    res.render('createAccount', {})
+})
+
+app.get('/login', function(req, res) {
+    renderLogin(req, res)
 });
 
 app.post('/', (req, res) => {
@@ -91,7 +95,7 @@ app.post('/', (req, res) => {
                             console.log(err);
                             res.status(500).send('Erro ao buscar extrato');
                         } else {
-                            res.render('login', {nome: user.nome, saldo: user.balance, accountNum: user.accountNum, contas: accounts, extrato: extract});
+                            res.render('login', {nome: user.nome, saldo: user.balance, accountNum: user.accountNum, contas: accounts, extrato: extract, error: ''});
                         }
                     });
                 }
@@ -154,57 +158,60 @@ app.post('/transfer', (req, res) => {
     const val = parseFloat(req.body.val); // Convert the transfer value to a number
     const accountNum = req.body.accountNum;
     const source = req.session.accountNum
- 
-
-    const sqlTarget = 'SELECT * FROM usuarios WHERE accountNum = ?';
-    db.query(sqlTarget, [accountNum], function (err, results) {
-        if (err) {
-            console.log(err);
-        } else {
-            const target = results[0].balance
-            const sqlSource = 'SELECT * FROM usuarios WHERE accountNum = ?';
-            db.query(sqlSource, [source], function (err, results) {
-                if (err) {
-                    console.log(err)
-                } else {
-                    const sourceBalance = results[0].balance
-                    if (sourceBalance < val) {
-                        console.log('Saldo insuficiente')
-                        res.redirect('/login')
-                    }else{
-                        const newSource = sourceBalance - val
-                        const newTarget = target + val
-                        const sqlUpdateSource = 'UPDATE usuarios SET balance = ? WHERE accountNum = ?';
-                        db.query(sqlUpdateSource, [newSource, source], function (err, results) {
-                            if (err) {
-                                console.log(err)
-                            } else {
-                                const sqlUpdateTarget = 'UPDATE usuarios SET balance = ? WHERE accountNum = ?';
-                                db.query(sqlUpdateTarget, [newTarget, accountNum], function (err, results) {
-                                    if (err) {
-                                        console.log(err)
-                                    } else {
-                                        const sqlInsertTransaction = 'INSERT INTO transacoes (valor, accountNum, tipo) VALUES (?,?,?)';
-                                        db.query(sqlInsertTransaction, [val, accountNum, 'Recebimento (+)'], function (err, results) {
-                                            if(err) {
-                                                console.log(err)
-                                            } else {
-                                                db.query(sqlInsertTransaction, [val, source, 'Transferência (-)'], function (err, results) {
-                                                    if(err) {
-                                                        console.log(err)
-                                                    } else {
-                                                        res.redirect('/login')
-                                                    } 
-                                                })
-                                            }
-                                        })
-                                    }           
-                                });
-                            }
-                        });
+    if(accountNum == source) {
+        console.log('Você não pode transferir para sua conta conta')
+        renderLogin(req, res, 'Você não pode transferir para sua conta')
+    } else {
+        const sqlTarget = 'SELECT * FROM usuarios WHERE accountNum = ?';
+        db.query(sqlTarget, [accountNum], function (err, results) {
+            if (err) {
+                console.log(err);
+            } else {
+                const target = results[0].balance
+                const sqlSource = 'SELECT * FROM usuarios WHERE accountNum = ?';
+                db.query(sqlSource, [source], function (err, results) {
+                    if (err) {
+                        console.log(err)
+                    } else {
+                        const sourceBalance = results[0].balance
+                        if (sourceBalance < val) {
+                            console.log('Saldo insuficiente')
+                            renderLogin(req, res, 'Saldo insuficiente para transferir')
+                        }else{
+                            const newSource = sourceBalance - val
+                            const newTarget = target + val
+                            const sqlUpdateSource = 'UPDATE usuarios SET balance = ? WHERE accountNum = ?';
+                            db.query(sqlUpdateSource, [newSource, source], function (err, results) {
+                                if (err) {
+                                    console.log(err)
+                                } else {
+                                    const sqlUpdateTarget = 'UPDATE usuarios SET balance = ? WHERE accountNum = ?';
+                                    db.query(sqlUpdateTarget, [newTarget, accountNum], function (err, results) {
+                                        if (err) {
+                                            console.log(err)
+                                        } else {
+                                            const sqlInsertTransaction = 'INSERT INTO transacoes (valor, accountNum, tipo) VALUES (?,?,?)';
+                                            db.query(sqlInsertTransaction, [val, accountNum, 'Recebimento (+)'], function (err, results) {
+                                                if(err) {
+                                                    console.log(err)
+                                                } else {
+                                                    db.query(sqlInsertTransaction, [val, source, 'Transferência (-)'], function (err, results) {
+                                                        if(err) {
+                                                            console.log(err)
+                                                        } else {
+                                                            res.redirect('/login')
+                                                        } 
+                                                    })
+                                                }
+                                            })
+                                        }           
+                                    });
+                                }
+                            });
+                        }
                     }
-                }
-            });
-        }
-    });
+                });
+            }
+        });
+    }
 });
