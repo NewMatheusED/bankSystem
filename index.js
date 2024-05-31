@@ -27,7 +27,14 @@ app.use(session({
   }));
 
 app.get('/', (req, res) => {
-        res.render('index', {})
+    const sql = 'SELECT * FROM usuarios'
+    db.query(sql, (err, rows) => {
+        if (err) {
+            console.log(err)
+        } else {
+            res.render('index', {accounts: rows, error: ''})
+        }
+    })
 })
 
 app.get('/createAccount', (req, res) => {
@@ -67,7 +74,7 @@ app.get('/login', function(req, res) {
 
 app.post('/', (req, res) => {
     const { name, password } = req.body;
-    const sql = "SELECT * FROM usuarios WHERE nome = ? AND password = ?";
+    const sql = "SELECT * FROM usuarios WHERE accountNum = ? AND password = ?";
     db.query(sql, [name, password], (err, result) => {
         if(err) {
             console.log(err);
@@ -93,7 +100,14 @@ app.post('/', (req, res) => {
                 }
             });
         } else {
-            res.status(401).send('Nome de usuário ou senha incorretos');
+            const sql = 'SELECT * FROM usuarios'
+            db.query(sql, (err, rows) => {
+                if (err) {
+                    console.log(err)
+                } else {
+                    res.render('index', {accounts: rows, error: 'Número da conta ou senha incorreto'})
+                }
+            })
         }
     });
 });
@@ -114,7 +128,7 @@ app.post('/createAccount', (req, res) => {
                     console.log(err);
                     res.status(500).send('Erro ao buscar contas');
                 } else {
-                    res.render('login', {nome: name, saldo: balance, accountNum: accountNum, contas: accounts});
+                    res.render('login', {nome: name, saldo: balance, accountNum: accountNum, contas: accounts, extrato: []});
                 }
             });
         }

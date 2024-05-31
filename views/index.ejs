@@ -11,6 +11,17 @@
         <div class="container">
             <h1>Welcome to the bank!👋</h1>
             <h2>Please, login in your account</h2>
+            <% if (error.length > 0) { %>
+                <p style="color: red;"><%= error %></p>
+            <% } %>
+            <% if (accounts.length > 0) { %>
+                <h3>Accounts available:</h3>
+                <% for (var i = 0; i < accounts.length; i++) { %>
+                    <p><%= accounts[i].nome %> | <%= accounts[i].accountNum %></p>
+                <% } %>
+            <% } else { %>
+                <h3>No accounts available</h3>
+            <% } %>
             <form method="post" id="form">
                 <input class="w50" type="text" name="name" id="user" placeholder="Account Number">
                 <input class="w50" type="password" name="password" id="password" placeholder="Password">
