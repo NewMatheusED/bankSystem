@@ -95,7 +95,7 @@ app.post('/', (req, res) => {
                     } else if (result) {
                         req.session.accountNum = user.accountNum;
                         const sqlAllAccounts = "SELECT * FROM usuarios WHERE accountNum != ?"; // obter todas as contas menos a sua própria
-                        db.query(sqlAllAccounts, [name], (err, accounts) => {
+                        db.query(sqlAllAccounts, [accountNum], (err, accounts) => {
                             if(err) {
                                 console.log(err);
                                 res.status(500).send('Erro ao buscar contas');
@@ -136,7 +136,7 @@ app.post('/createAccount', (req, res) => {
                 } else {
                     req.session.accountNum = accountNum;
                     const sqlAllAccounts = "SELECT * FROM usuarios WHERE accountNum != ?"; // obter todas as contas
-                    db.query(sqlAllAccounts, [name], (err, accounts) => {
+                    db.query(sqlAllAccounts, [accountNum], (err, accounts) => {
                         if(err) {
                             console.log(err);
                             res.status(500).send('Erro ao buscar contas');

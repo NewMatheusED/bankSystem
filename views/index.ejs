@@ -16,10 +16,19 @@
             <% } %>
             <% if (accounts.length > 0) { %>
                 <h3>Accounts available:</h3>
-                <% for (var i = 0; i < accounts.length; i++) { %>
-                    <p><%= accounts[i].nome %> | <%= accounts[i].accountNum %></p>
-                <% } %>
-            <% } else { %>
+                <table>
+                    <tr>
+                        <th>Name</th>
+                        <th>Account Nº</th>
+                    </tr>
+                    <% for (var i = 0; i < accounts.length; i++) { %>
+                        <tr>
+                            <td><%= accounts[i].nome %></td>
+                            <td><%= accounts[i].accountNum %></td>
+                        </tr>
+                        <% } %>
+                </table>
+                        <% } else { %>
                 <h3>No accounts available</h3>
             <% } %>
             <form method="post" id="form">
