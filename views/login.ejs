@@ -20,9 +20,17 @@
             <h2>Operações disponíveis:</h2>
             <div class="operation">
                 <h3>Depositar</h3>
+                <form action="/deposit" method="post">
+                    <input type="number" name="val" id="valorDepositado" placeholder="Valor">
+                    <button type="submit">Depositar</button>
+                </form>
             </div><!--operation-->
             <div class="operation">
                 <h3>Sacar</h3>
+                <form action="/withdraw" method="post">
+                    <input type="number" name="val" id="valorSacado" placeholder="Valor">
+                    <button type="submit">Sacar</button>
+                </form>
             </div><!--operation-->
             <div class="operation">
                 <h3>Transferir</h3>

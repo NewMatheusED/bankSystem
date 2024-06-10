@@ -93,7 +93,7 @@ app.post('/', (req, res) => {
                     } else if (result) {
                         req.session.accountNum = user.accountNum;
                         const sqlAllAccounts = "SELECT * FROM usuarios WHERE accountNum != ?"; // obter todas as contas menos a sua própria
-                        db.query(sqlAllAccounts, [accountNum], (err, accounts) => {
+                        db.query(sqlAllAccounts, [user.accountNum], (err, accounts) => {
                             if(err) {
                                 console.log(err);
                                 res.status(500).send('Erro ao buscar contas');
@@ -167,63 +167,157 @@ app.post('/login', (req, res) => {
 });
 
 app.post('/transfer', (req, res) => {
-    const val = parseFloat(req.body.val); // Convert the transfer value to a number
+    const val = parseFloat(req.body.val);
     const accountNum = req.body.accountNum;
-    const source = req.session.accountNum
+    const source = req.session.accountNum;
+
+    if (isNaN(val) || !accountNum || !source) {
+        console.log('Dados de entrada inválidos');
+        return renderLogin(req, res, 'Dados de entrada inválidos');
+    }
+
     if(accountNum == source) {
-        console.log('Você não pode transferir para sua conta conta')
-        renderLogin(req, res, 'Você não pode transferir para sua conta')
-    } else {
-        const sqlTarget = 'SELECT * FROM usuarios WHERE accountNum = ?';
-        db.query(sqlTarget, [accountNum], function (err, results) {
+        console.log('Você não pode transferir para sua conta conta');
+        return renderLogin(req, res, 'Você não pode transferir para sua conta');
+    }
+
+    db.beginTransaction(function(err) {
+        if (err) { throw err; }
+
+        const sql = 'SELECT * FROM usuarios WHERE accountNum = ?';
+        db.query(sql, [source], function (err, results) {
             if (err) {
-                console.log(err);
+                return db.rollback(function() {
+                    throw err;
+                });
+            }
+
+            const sourceBalance = parseFloat(results[0].balance);
+            if (isNaN(sourceBalance) || sourceBalance < val) {
+                console.log('Saldo insuficiente');
+                return renderLogin(req, res, 'Saldo insuficiente para transferir');
+            }
+
+            const newSource = sourceBalance - val;
+            const sqlUpdateSource = 'UPDATE usuarios SET balance = ? WHERE accountNum = ?';
+            db.query(sqlUpdateSource, [newSource, source], function (err, results) {
+                if (err) {
+                    return db.rollback(function() {
+                        throw err;
+                    });
+                }
+
+                db.query(sql, [accountNum], function (err, results) {
+                    if (err) {
+                        return db.rollback(function() {
+                            throw err;
+                        });
+                    }
+
+                    const targetBalance = parseFloat(results[0].balance);
+                    const newTarget = targetBalance + val;
+                    const sqlUpdateTarget = 'UPDATE usuarios SET balance = ? WHERE accountNum = ?';
+                    db.query(sqlUpdateTarget, [newTarget, accountNum], function (err, results) {
+                        if (err) {
+                            return db.rollback(function() {
+                                throw err;
+                            });
+                        }
+
+                        const sqlInsertTransaction = 'INSERT INTO transacoes (valor, accountNum, tipo) VALUES (?,?,?)';
+                        db.query(sqlInsertTransaction, [val, accountNum, 'Recebimento (+)'], function (err, results) {
+                            if(err) {
+                                return db.rollback(function() {
+                                    throw err;
+                                });
+                            }
+
+                            db.query(sqlInsertTransaction, [val, source, 'Transferência (-)'], function (err, results) {
+                                if(err) {
+                                    return db.rollback(function() {
+                                        throw err;
+                                    });
+                                }
+
+                                db.commit(function(err) {
+                                    if (err) {
+                                        return db.rollback(function() {
+                                            throw err;
+                                        });
+                                    }
+                                    console.log('Transferência concluída com sucesso!');
+                                    res.redirect('/login');
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    });
+});
+
+
+
+app.post('/deposit', (req, res) => {
+    const val = parseFloat(req.body.val); // Convert the deposit value to a number
+    const accountNum = req.session.accountNum;
+    const sql = 'SELECT * FROM usuarios WHERE accountNum = ?';
+    db.query(sql, [accountNum], (err, results) => {
+        if (err) {
+            console.log(err)
+        } else {
+            const user = results[0];
+            const newBalance = val + user.balance
+            const sqlUpdate = 'UPDATE usuarios SET balance = ? WHERE accountNum = ?';
+            db.query(sqlUpdate, [newBalance, accountNum], (err, results) => {
+                if (err) {
+                    console.log(err)
+                } else {
+                    const sqlInsertTransaction = 'INSERT INTO transacoes (valor, accountNum, tipo) VALUES (?,?,?)';
+                    db.query(sqlInsertTransaction, [val, accountNum, 'Depósito (+)'], (err, results) => {
+                        if (err) {
+                            console.log(err)
+                        } else {
+                            res.redirect('/login');
+                        }
+                    })
+                }
+            })
+        }
+    })
+})
+
+app.post('/withdraw', (req, res) => {
+    const val = parseFloat(req.body.val); // Convert the deposit value to a number
+    const accountNum = req.session.accountNum;
+    const sql = 'SELECT * FROM usuarios WHERE accountNum = ?';
+    db.query(sql, [accountNum], (err, results) => {
+        if (err) {
+            console.log(err)
+        } else {
+            const user = results[0];
+            if (user.balance < val) {
+                console.log('Saldo insuficiente')
+                renderLogin(req, res, 'Saldo insuficiente para saque')
             } else {
-                const target = results[0].balance
-                const sqlSource = 'SELECT * FROM usuarios WHERE accountNum = ?';
-                db.query(sqlSource, [source], function (err, results) {
+                const newBalance = user.balance - val;
+                const sqlUpdate = 'UPDATE usuarios SET balance = ? WHERE accountNum = ?';
+                db.query(sqlUpdate, [newBalance, accountNum], (err, results) => {
                     if (err) {
                         console.log(err)
                     } else {
-                        const sourceBalance = results[0].balance
-                        if (sourceBalance < val) {
-                            console.log('Saldo insuficiente')
-                            renderLogin(req, res, 'Saldo insuficiente para transferir')
-                        }else{
-                            const newSource = sourceBalance - val
-                            const newTarget = target + val
-                            const sqlUpdateSource = 'UPDATE usuarios SET balance = ? WHERE accountNum = ?';
-                            db.query(sqlUpdateSource, [newSource, source], function (err, results) {
-                                if (err) {
-                                    console.log(err)
-                                } else {
-                                    const sqlUpdateTarget = 'UPDATE usuarios SET balance = ? WHERE accountNum = ?';
-                                    db.query(sqlUpdateTarget, [newTarget, accountNum], function (err, results) {
-                                        if (err) {
-                                            console.log(err)
-                                        } else {
-                                            const sqlInsertTransaction = 'INSERT INTO transacoes (valor, accountNum, tipo) VALUES (?,?,?)';
-                                            db.query(sqlInsertTransaction, [val, accountNum, 'Recebimento (+)'], function (err, results) {
-                                                if(err) {
-                                                    console.log(err)
-                                                } else {
-                                                    db.query(sqlInsertTransaction, [val, source, 'Transferência (-)'], function (err, results) {
-                                                        if(err) {
-                                                            console.log(err)
-                                                        } else {
-                                                            res.redirect('/login')
-                                                        } 
-                                                    })
-                                                }
-                                            })
-                                        }           
-                                    });
-                                }
-                            });
-                        }
+                        const sqlInsertTransaction = 'INSERT INTO transacoes (valor, accountNum, tipo) VALUES (?,?,?)';
+                        db.query(sqlInsertTransaction, [val, accountNum, 'Saque (-)'], (err, results) => {
+                            if (err) {
+                                console.log(err)
+                            } else {
+                                res.redirect('/login');
+                            }
+                        })
                     }
-                });
+                })
             }
-        });
-    }
-});
+        }
+    })
+})
