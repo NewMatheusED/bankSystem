@@ -1,3 +1,14 @@
+/*
+Como testar o programa:
+1. Baixe e configure o XAMPP
+2. Inicie o Apache e o MySQL no XAMPP
+3. Crie um banco de dados chamado 'banksystem'
+4. Crie uma tabela chamada 'usuarios' com as colunas 'nome'(text), 'accountNum'(int), 'balance'(float) e 'password'(text)
+5. Crie uma tabela chamada 'transacoes' com as colunas 'valor'(float), 'accountNum'(int) e 'tipo'(text)
+8. Execute o comando 'nodemon index.js' para iniciar o servidor
+9. Abra o navegador e acesse 'http://localhost:3000'
+*/
+
 const express = require('express');
 const app = express();
 const db = require('./db');
