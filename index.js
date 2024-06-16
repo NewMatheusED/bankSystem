@@ -83,9 +83,32 @@ app.get('/createAccount', (req, res) => {
     res.render('createAccount', {})
 })
 
-app.get('/login', function(req, res) {
+app.get('/login', (req, res) => {
     renderLogin(req, res)
 });
+
+app.get('/admin', (req, res) => {
+    const SQL = 'SELECT * FROM usuarios'
+    db.query(SQL, (err, result) => {
+        if (err) {
+            console.log(err)
+        } else {
+            res.render('admin', {accounts: result})
+        }
+    })
+})
+
+app.delete('/deleteAccount', (req, res) => {
+    var accountNum = req.body.accountNum;
+    var SqlDelete = 'DELETE FROM usuarios WHERE accountNum = ?';
+    db.query(SqlDelete, [accountNum], (err, result) => {
+        if (err) {
+            console.log(err)
+        } else {
+            res.json({ success: true })
+        }
+    })
+})
 
 app.post('/', (req, res) => {
     const { name, password } = req.body;

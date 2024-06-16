@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank System - Admin</title>
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+</head>
+<body>
+    <section>
+        <div class="container">
+            <% if (accounts.length > 0) { %>
+                <% for (var i = 0; i < accounts.length; i++) { %>
+                    <div class="account">
+                        <h3><%= accounts[i].nome %></h3>
+                        <p>Account number: <%= accounts[i].accountNum %></p>
+                        <p>Balance: <%= new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(accounts[i].balance) %></p>
+                        <button id= <%= accounts[i].accountNum %> >Delete</button>
+                    </div><!--account-->
+                <% } %>
+            <% } else { %>
+                <h3>No accounts available</h3>
+            <% } %>
+            <br>
+            <a href="/createAccount">Create a new account</a>
+        </div><!--container-->
+    </section>
+</body>
+<script>
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(button => {
+        button.addEventListener('click', function() {
+            let accountNum = this.id;
+            fetch('/deleteAccount', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ accountNum: accountNum }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert('Failed to delete account');
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        });
+    });
+</script>
+</html>
